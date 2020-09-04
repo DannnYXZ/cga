@@ -9,7 +9,7 @@ public class CameraDriver implements EventListener {
 
   private Camera camera;
   private float moveSpeed = 1.f;
-  private float rotSpeed = 1.f;
+  private float rotSpeed = .5f;
 
   public CameraDriver setRotSpeed(float rotSpeed) {
     this.rotSpeed = rotSpeed;
@@ -40,10 +40,10 @@ public class CameraDriver implements EventListener {
     if (keyCode == Keys.S) {
       camera.move(new Vec3(0, 0, 1).mul(moveSpeed * dt));
     }
-    if (keyCode == Keys.Q) {
+    if (keyCode == Keys.E) {
       camera.move(new Vec3(0, 1, 0).mul(moveSpeed * dt));
     }
-    if (keyCode == Keys.E) {
+    if (keyCode == Keys.Q) {
       camera.move(new Vec3(0, -1, 0).mul(moveSpeed * dt));
     }
     if (keyCode == Keys.U) {

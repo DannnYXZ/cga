@@ -36,6 +36,13 @@ public class Vec3 {
     return this;
   }
 
+  public Vec3 sub(Vec3 b) {
+    x -= b.x;
+    y -= b.y;
+    z -= b.z;
+    return this;
+  }
+
   public Vec3 mul(float k) {
     x *= k;
     y *= k;
