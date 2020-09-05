@@ -10,8 +10,9 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @Setter
-public class Face {
+public class Polygon {
   public Vec3 norm;
-  public List<Integer> vertices = new ArrayList<>();
+  public List<Vec3> norms = new ArrayList<>();
+  public List<Vec3> vertices = new ArrayList<>();
   public Vec3 tex;
 }

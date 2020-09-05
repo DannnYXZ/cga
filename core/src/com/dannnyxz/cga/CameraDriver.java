@@ -8,8 +8,8 @@ import com.dannnyxz.cga.model.EventListener;
 public class CameraDriver implements EventListener {
 
   private Camera camera;
-  private float moveSpeed = 1.f;
-  private float rotSpeed = .5f;
+  private float moveSpeed = 2.f;
+  private float rotSpeed = 1.5f;
 
   public CameraDriver setRotSpeed(float rotSpeed) {
     this.rotSpeed = rotSpeed;

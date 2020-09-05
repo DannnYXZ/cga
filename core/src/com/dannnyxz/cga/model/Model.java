@@ -13,5 +13,6 @@ import lombok.experimental.Accessors;
 public class Model {
 
   public List<Vec3> vertices = new ArrayList<>();
-  public List<Face> faces = new ArrayList<>();
+  public List<Polygon> polygons = new ArrayList<>();
+  public List<Vec3> normals = new ArrayList<>();
 }

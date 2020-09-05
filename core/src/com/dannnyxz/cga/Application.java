@@ -21,7 +21,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class Application extends ApplicationAdapter {
 
-  Renderer renderer;
   Model model;
   Camera camera;
   CameraDriver cameraDriver;
@@ -30,11 +29,11 @@ public class Application extends ApplicationAdapter {
   SpriteBatch spriteBatch;
   Texture tex;
   MutablePair<Integer, Integer> windowResolution;
+  ShaderProgram program = new ShaderProgram();
 
   @Override
   public void create() {
     windowResolution = new MutablePair<>(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-    renderer = new Renderer();
     model = ModelLoader.load("models/Head/Model.obj");
     camera = new Camera(new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0);
     cameraDriver = new CameraDriver(camera);
@@ -43,6 +42,7 @@ public class Application extends ApplicationAdapter {
     spriteBatch = new SpriteBatch();
     pixmap = createScreenPixmap();
     tex = new Texture(pixmap);
+    program.enableZBuffer(pixmap.getWidth(), pixmap.getHeight());
   }
 
   private Pixmap createScreenPixmap() {
@@ -75,7 +75,11 @@ public class Application extends ApplicationAdapter {
     transform.mul(mProj);
     transform.mul(mView);
     transform.mul(mModel);
-    renderer.renderModel(model, transform, pixmap);
+
+    program.uniforms().put("transform", transform);
+    program.uniforms().put("lightSource", new Vec3(1, 1, 1));
+    program.drawFaces(model.polygons, pixmap);
+//    renderer.renderModel(model, transform, pixmap);
     tex.draw(pixmap, 0, 0);
     spriteBatch.begin();
     spriteBatch.draw(tex, 0, 0);
