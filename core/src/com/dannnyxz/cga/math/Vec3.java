@@ -18,6 +18,12 @@ public class Vec3 {
     this.z = z;
   }
 
+  public Vec3(Vec4 v) {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+  }
+
   public float dot(Vec3 b) {
     return x * b.x + y * b.y + z * b.z;
   }
@@ -88,7 +94,7 @@ public class Vec3 {
   public static Vec3 toBarycentric(Vec3 p, Vec3 v1, Vec3 v2, Vec3 v3) {
     Vec3 n = new Vec3(v3.x - v1.x, v2.x - v1.x, v1.x - p.x)
         .cross(new Vec3(v3.y - v1.y, v2.y - v1.y, v1.y - p.y));
-    if (abs(n.z) > 1e-2)
+    if (abs(n.z) > 1e-3)
       return new Vec3(1f - (n.x + n.y) / n.z, n.y / n.z, n.x / n.z);
     return new Vec3(-1, 1, 1);
   }

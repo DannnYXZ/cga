@@ -43,7 +43,7 @@ public class Mat4 {
 
   public static Mat4 projection(float zNear, float z_far, float aspect, float fov) {
     return new Mat4(new float[][]{
-        {1 / (aspect * (float) tan(fov / 2)), 0, 0, 0},
+        {1 / (aspect * (float) tan(fov / 2f)), 0, 0, 0},
         {0, 1 / (float) tan(fov / 2), 0, 0},
         {0, 0, z_far / (zNear - z_far), zNear * z_far / (zNear - z_far)},
         {0, 0, -1, 0}});

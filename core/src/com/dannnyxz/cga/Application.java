@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.dannnyxz.cga.loader.ModelLoader;
 import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
+import com.dannnyxz.cga.math.Vec4;
 import com.dannnyxz.cga.model.KeyboardEvent;
 import com.dannnyxz.cga.model.KeyboardProcessor;
 import com.dannnyxz.cga.model.Model;
@@ -63,7 +64,7 @@ public class Application extends ApplicationAdapter {
     Vec3 resolution = new Vec3(windowResolution.left, windowResolution.right, 0);
 
     Mat4 mProj = Mat4
-        .projection(.0f, -100f,
+        .projection(-0.5f, -10f,
             max(resolution.x, resolution.y) / min(resolution.x, resolution.y),
             1.1f);
 //    Mat4 mView = Mat4.lookAt(new Vec3(0, .1f, 2), new Vec3(0, 0, 0));
@@ -76,8 +77,11 @@ public class Application extends ApplicationAdapter {
     transform.mul(mView);
     transform.mul(mModel);
 
+    program.uniforms().put("model", mModel);
+    program.uniforms().put("view", mView);
+    program.uniforms().put("proj", mProj);
     program.uniforms().put("transform", transform);
-    program.uniforms().put("lightSource", new Vec3(1, 1, 1));
+    program.uniforms().put("lightSource", new Vec3(1, 1, 1).mul(mView));
     program.drawFaces(model.polygons, pixmap);
 //    renderer.renderModel(model, transform, pixmap);
     tex.draw(pixmap, 0, 0);
@@ -85,19 +89,19 @@ public class Application extends ApplicationAdapter {
     spriteBatch.draw(tex, 0, 0);
     spriteBatch.end();
     keyboardProcessor.processInput();
-    detectResolutionChange(windowResolution);
+//    detectResolutionChange(windowResolution);
     System.out.println(windowResolution.toString());
   }
 
-  private void detectResolutionChange(Pair<Integer, Integer> prevResolution) {
-    if (Gdx.graphics.getWidth() != prevResolution.getLeft()
-        || Gdx.graphics.getHeight() != prevResolution.getRight()) {
-      windowResolution.setLeft(windowResolution.getLeft());
-      windowResolution.setRight(windowResolution.getRight());
-      pixmap.dispose();
-      pixmap = createScreenPixmap();
-    }
-  }
+//  private void detectResolutionChange(Pair<Integer, Integer> prevResolution) {
+//    if (Gdx.graphics.getWidth() != prevResolution.getLeft()
+//        || Gdx.graphics.getHeight() != prevResolution.getRight()) {
+//      windowResolution.setLeft(windowResolution.getLeft());
+//      windowResolution.setRight(windowResolution.getRight());
+//      pixmap.dispose();
+//      pixmap = createScreenPixmap();
+//    }
+//  }
 
   @Override
   public void dispose() {
