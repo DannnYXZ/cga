@@ -40,10 +40,10 @@ public class CameraDriver implements EventListener {
     if (keyCode == Keys.S) {
       camera.move(new Vec3(0, 0, 1).mul(moveSpeed * dt));
     }
-    if (keyCode == Keys.E) {
+    if (keyCode == Keys.SPACE) {
       camera.move(new Vec3(0, 1, 0).mul(moveSpeed * dt));
     }
-    if (keyCode == Keys.Q) {
+    if (keyCode == Keys.SHIFT_LEFT) {
       camera.move(new Vec3(0, -1, 0).mul(moveSpeed * dt));
     }
     if (keyCode == Keys.U) {

@@ -2,6 +2,7 @@ package com.dannnyxz.cga.model;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Input.Keys;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,7 +29,9 @@ public class KeyboardProcessor implements EventPublisher {
       Input.Keys.LEFT,
       Input.Keys.RIGHT,
       Input.Keys.UP,
-      Input.Keys.DOWN
+      Input.Keys.DOWN,
+      Keys.SHIFT_LEFT,
+      Keys.SPACE
   );
 
   @Override

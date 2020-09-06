@@ -13,12 +13,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.dannnyxz.cga.loader.ModelLoader;
 import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
-import com.dannnyxz.cga.math.Vec4;
 import com.dannnyxz.cga.model.KeyboardEvent;
 import com.dannnyxz.cga.model.KeyboardProcessor;
 import com.dannnyxz.cga.model.Model;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class Application extends ApplicationAdapter {
 
@@ -35,6 +33,7 @@ public class Application extends ApplicationAdapter {
   @Override
   public void create() {
     windowResolution = new MutablePair<>(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+//    model = ModelLoader.load("models/Ship/Model.obj");
     model = ModelLoader.load("models/Head/Model.obj");
     camera = new Camera(new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0);
     cameraDriver = new CameraDriver(camera);
@@ -82,7 +81,7 @@ public class Application extends ApplicationAdapter {
     program.uniforms().put("proj", mProj);
     program.uniforms().put("screen", mScreen);
     program.uniforms().put("transform", transform);
-    program.uniforms().put("lightSource", new Vec3(1, 1, 1).mul(mView));
+    program.uniforms().put("lightSource", new Vec3(1, 1, 1));
     program.drawFaces(model.polygons, pixmap);
 //    renderer.renderModel(model, transform, pixmap);
     tex.draw(pixmap, 0, 0);

@@ -13,6 +13,9 @@ import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
 import com.dannnyxz.cga.math.Vec4;
 import com.dannnyxz.cga.model.Polygon;
+import com.dannnyxz.cga.shader.BasicVertexShader;
+import com.dannnyxz.cga.shader.LambertFragmentShader;
+import com.dannnyxz.cga.shader.WireframeFragmentShader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,28 +56,10 @@ public class ShaderProgram {
     }
   }
 
-  VertexShader vertexShader = new VertexShader() {
-    @Override
-    public Vec4 execute(Vec4 vertex, Map<String, Object> uniforms, Map<String, Object> props) {
-      Mat4 transform = (Mat4) uniforms.get("transform");
-      Vec4 transformed = vertex.mul(transform);
-      return transformed;
-    }
-  };
+  VertexShader vertexShader = new BasicVertexShader();
 
-  FragmentShader fragmentShader = new FragmentShader() {
-    @Override
-    public Vec4 execute(Map<String, Object> in, Map<String, Object> props) {
-      float intensity = ((Vec3) props.get("norm")).dot((Vec3) uniforms.get("lightSource"));
-//      intensity = .2f;
-      Vec3 brc = (Vec3) props.get("brc");
-      float d = min(brc.x, brc.y, brc.z);
-      Vec4 col = (Vec4) props.get("color");
-      return col;
-//      return new Vec4(0, 1, 0, 1);
-//      return new Vec4(intensity, intensity, intensity, 1);
-    }
-  };
+//  FragmentShader fragmentShader = new WireframeFragmentShader();
+  FragmentShader fragmentShader = new  LambertFragmentShader();
 
   public void renderTriangle(Vec3 v1, Vec3 v2, Vec3 v3, Map<String, Object> vertexProps,
       Pixmap pixmap) {
@@ -92,16 +77,13 @@ public class ShaderProgram {
 //          synchronized (zBuffer) {
           synchronized (lock[i][j]) {
             if (frPos.z < zBuffer[i][j]) {
-              zBuffer[i][j] = frPos.z;
               vertexProps.put("frPos", frPos);
               vertexProps.put("brc", brc);
               // TODO: interpolate all props
               Vec4 color = fragmentShader.execute(uniforms, vertexProps);
-//              float x = zBuffer[i][j];
-//              x *= x*x*.1f;
+              if (color == null) continue;
+              zBuffer[i][j] = frPos.z;
               pixmap.drawPixel(i, j, new Color(color.w, color.x, color.y, color.z).toIntBits());
-//              pixmap.drawPixel(i, j, new Color(color.w, x, x, x).toIntBits());
-//            }
             }
           }
         }
@@ -116,6 +98,11 @@ public class ShaderProgram {
   boolean clip(Vec4 v) {
     if (!isBetween(v.x, -v.w, v.w)) return true;
     if (!isBetween(v.y, -v.w, v.w)) return true;
+    if (!isBetween(v.z, -v.w, v.w)) return true;
+    return false;
+  }
+
+  boolean clipZ(Vec4 v) {
     if (!isBetween(v.z, -v.w, v.w)) return true;
     return false;
   }
@@ -135,12 +122,7 @@ public class ShaderProgram {
     Vec4 v3 = vertexShader.execute(new Vec4(polygon.vertices.get(2), 1), uniforms, props);
 
 //    if (v1.z < .301 || v2.z < .301 || v3.z < 0.301) return;
-//
-//    v1.mul(1 / v1.w);
-//    v2.mul(1 / v2.w);
-//    v3.mul(1 / v3.w);
-
-//    if (clip(v1) || clip(v2) || clip(v3)) return;
+//    if (clipZ(v1) || clipZ(v2) || clipZ(v3)) return;
     if (clip(v1) || clip(v2) || clip(v3)) return;
 
     v1.mul(1 / v1.w).mul(screen);
