@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface FragmentShader {
 
-  Vec4 execute(Map<String, Object> in);
+  Vec4 execute(Map<String, Object> in, Map<String, Object> props);
 }

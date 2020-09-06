@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface VertexShader {
 
-  Vec4 execute(Vec4 vertex, Map<String, Object> uniforms);
+  Vec4 execute(Vec4 vertex, Map<String, Object> uniforms, Map<String, Object> props);
 }

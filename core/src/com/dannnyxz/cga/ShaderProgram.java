@@ -13,7 +13,6 @@ import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
 import com.dannnyxz.cga.math.Vec4;
 import com.dannnyxz.cga.model.Polygon;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,14 +32,14 @@ public class ShaderProgram {
   private static AtomicInteger[][] lock;
   AtomicInteger cnt = new AtomicInteger(0);
 
-  ExecutorService pool = Executors.newFixedThreadPool(10);
+  ExecutorService pool = Executors.newCachedThreadPool();
 
   public void enableZBuffer(int w, int h) {
     zBuffer = new Float[w][h];
     lock = new AtomicInteger[w][h];
     for (int i = 0; i < w; i++) {
       for (int j = 0; j < h; j++) {
-        zBuffer[i][j] = -1e30f;
+        zBuffer[i][j] = 1e30f;
         lock[i][j] = new AtomicInteger(0);
       }
     }
@@ -48,14 +47,16 @@ public class ShaderProgram {
 
   public void clearZBuffer() {
     for (int i = 0; i < zBuffer.length; i++) {
-      Arrays.fill(zBuffer[i], -1e30f);
+      for (int j = 0; j < zBuffer[0].length; j++) {
+        zBuffer[i][j] = 1e30f;
+      }
     }
   }
 
   VertexShader vertexShader = new VertexShader() {
     @Override
-    public Vec4 execute(Vec4 vertex, Map<String, Object> in) {
-      Mat4 transform = (Mat4) in.get("transform");
+    public Vec4 execute(Vec4 vertex, Map<String, Object> uniforms, Map<String, Object> props) {
+      Mat4 transform = (Mat4) uniforms.get("transform");
       Vec4 transformed = vertex.mul(transform);
       return transformed;
     }
@@ -63,19 +64,20 @@ public class ShaderProgram {
 
   FragmentShader fragmentShader = new FragmentShader() {
     @Override
-    public Vec4 execute(Map<String, Object> in) {
-      float intensity = ((Vec3) in.get("norm")).dot((Vec3) in.get("lightSource"));
+    public Vec4 execute(Map<String, Object> in, Map<String, Object> props) {
+      float intensity = ((Vec3) props.get("norm")).dot((Vec3) uniforms.get("lightSource"));
 //      intensity = .2f;
-      Vec3 brc = (Vec3) in.get("brc");
+      Vec3 brc = (Vec3) props.get("brc");
       float d = min(brc.x, brc.y, brc.z);
-      Vec4 col = (Vec4) in.get("color");
+      Vec4 col = (Vec4) props.get("color");
       return col;
 //      return new Vec4(0, 1, 0, 1);
 //      return new Vec4(intensity, intensity, intensity, 1);
     }
   };
 
-  public void renderTriangle(Vec3 v1, Vec3 v2, Vec3 v3, Pixmap pixmap) {
+  public void renderTriangle(Vec3 v1, Vec3 v2, Vec3 v3, Map<String, Object> vertexProps,
+      Pixmap pixmap) {
     int minX = round(min(v1.x, v2.x, v3.x));
     int maxX = round(max(v1.x, v2.x, v3.x));
     int minY = round(min(v1.y, v2.y, v3.y));
@@ -89,11 +91,12 @@ public class ShaderProgram {
         if (zBuffer != null) {
 //          synchronized (zBuffer) {
           synchronized (lock[i][j]) {
-            if (frPos.z > zBuffer[i][j]) {
+            if (frPos.z < zBuffer[i][j]) {
               zBuffer[i][j] = frPos.z;
-              uniforms.put("frPos", frPos);
-              uniforms.put("brc", brc);
-              Vec4 color = fragmentShader.execute(uniforms);
+              vertexProps.put("frPos", frPos);
+              vertexProps.put("brc", brc);
+              // TODO: interpolate all props
+              Vec4 color = fragmentShader.execute(uniforms, vertexProps);
 //              float x = zBuffer[i][j];
 //              x *= x*x*.1f;
               pixmap.drawPixel(i, j, new Color(color.w, color.x, color.y, color.z).toIntBits());
@@ -101,45 +104,55 @@ public class ShaderProgram {
 //            }
             }
           }
-          lock[i][j].incrementAndGet();
         }
       }
     }
   }
 
+  boolean isBetween(float a, float min, float max) {
+    return a >= min && a <= max;
+  }
+
+  boolean clip(Vec4 v) {
+    if (!isBetween(v.x, -v.w, v.w)) return true;
+    if (!isBetween(v.y, -v.w, v.w)) return true;
+    if (!isBetween(v.z, -v.w, v.w)) return true;
+    return false;
+  }
+
   public void drawFace(Polygon polygon, Pixmap pixmap) {
     Mat4 view = (Mat4) uniforms.get("view");
     Mat4 model = (Mat4) uniforms.get("model");
+    Mat4 proj = (Mat4) uniforms.get("proj");
+    Mat4 screen = (Mat4) uniforms.get("screen");
+    Map<String, Object> props = new HashMap<>();
 //    Vec4 norm = new Vec4(polygon.norm, 0).mul(model);
-    uniforms.put("norm", polygon.norm);
-    uniforms.put("color",
+    props.put("norm", polygon.norm);
+    props.put("color",
         new Vec4((float) random(), (float) random(), (float) random(), 1));
-    Vec4 v1 = vertexShader.execute(new Vec4(polygon.vertices.get(0), 1), uniforms);
-    Vec4 v2 = vertexShader.execute(new Vec4(polygon.vertices.get(1), 1), uniforms);
-    Vec4 v3 = vertexShader.execute(new Vec4(polygon.vertices.get(2), 1), uniforms);
-    if (abs(v1.w) < 1e-3 || abs(v3.w) < 1e-3 || abs(v3.w) < 1e-3) return;
-    v1.mul(1 / v1.w);
-    v2.mul(1 / v2.w);
-    v3.mul(1 / v3.w);
-//    if (polygon.norm.dot(new Vec3(0, 0, 1)) > 0)
-    renderTriangle(new Vec3(v1), new Vec3(v2), new Vec3(v3), pixmap);
+    Vec4 v1 = vertexShader.execute(new Vec4(polygon.vertices.get(0), 1), uniforms, props);
+    Vec4 v2 = vertexShader.execute(new Vec4(polygon.vertices.get(1), 1), uniforms, props);
+    Vec4 v3 = vertexShader.execute(new Vec4(polygon.vertices.get(2), 1), uniforms, props);
+
+//    if (v1.z < .301 || v2.z < .301 || v3.z < 0.301) return;
+//
+//    v1.mul(1 / v1.w);
+//    v2.mul(1 / v2.w);
+//    v3.mul(1 / v3.w);
+
+//    if (clip(v1) || clip(v2) || clip(v3)) return;
+    if (clip(v1) || clip(v2) || clip(v3)) return;
+
+    v1.mul(1 / v1.w).mul(screen);
+    v2.mul(1 / v2.w).mul(screen);
+    v3.mul(1 / v3.w).mul(screen);
+
+    renderTriangle(new Vec3(v1), new Vec3(v2), new Vec3(v3), props, pixmap);
+//    renderTriangleWire(new Vec3(v1), new Vec3(v2), new Vec3(v3), pixmap);
   }
 
   public void drawFaces(List<Polygon> polygons, Pixmap buffer) {
-//    polygons.parallelStream().forEach(x -> drawFace(x, buffer));
-    polygons.forEach(x -> drawFace(x, buffer));
-//    List<Callable<Object>> l = new ArrayList<>();
-//    for (Polygon p : polygons) {
-//      l.add(() -> {
-//        drawFace(p, buffer);
-//        return null;
-//      });
-//    }
-//    try {
-//      pool.invokeAll(l);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
+    polygons.parallelStream().forEach(polygon -> drawFace(polygon, buffer));
     clearZBuffer();
   }
 

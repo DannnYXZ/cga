@@ -64,7 +64,7 @@ public class Application extends ApplicationAdapter {
     Vec3 resolution = new Vec3(windowResolution.left, windowResolution.right, 0);
 
     Mat4 mProj = Mat4
-        .projection(-0.5f, -10f,
+        .projection(0.1f, 10f,
             max(resolution.x, resolution.y) / min(resolution.x, resolution.y),
             1.1f);
 //    Mat4 mView = Mat4.lookAt(new Vec3(0, .1f, 2), new Vec3(0, 0, 0));
@@ -72,7 +72,7 @@ public class Application extends ApplicationAdapter {
     Mat4 mModel = new Mat4();
     Mat4 mScreen = Mat4.viewport(resolution.x, resolution.y);
     Mat4 transform = new Mat4();
-    transform.mul(mScreen);
+//    transform.mul(mScreen);
     transform.mul(mProj);
     transform.mul(mView);
     transform.mul(mModel);
@@ -80,6 +80,7 @@ public class Application extends ApplicationAdapter {
     program.uniforms().put("model", mModel);
     program.uniforms().put("view", mView);
     program.uniforms().put("proj", mProj);
+    program.uniforms().put("screen", mScreen);
     program.uniforms().put("transform", transform);
     program.uniforms().put("lightSource", new Vec3(1, 1, 1).mul(mView));
     program.drawFaces(model.polygons, pixmap);
