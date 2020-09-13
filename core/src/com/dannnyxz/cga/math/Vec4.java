@@ -30,6 +30,11 @@ public class Vec4 {
     return x * b.x + y * b.y + z * b.z;
   }
 
+  public Vec4 cross(Vec4 b) {
+    return new Vec4(y * b.z - z * b.y, z * b.x - x * b.z, x * b.y - y * b.x, w);
+  }
+
+
   public Vec4 cp() {
     return new Vec4(x, y, z, w);
   }
@@ -60,10 +65,10 @@ public class Vec4 {
 
   public Vec4 mul(Mat4 b) {
     final float m[][] = b.mat;
-    float _x = x * m[0][0] + y * m[0][1] + z * m[0][2] + m[0][3];
-    float _y = x * m[1][0] + y * m[1][1] + z * m[1][2] + m[1][3];
-    float _z = x * m[2][0] + y * m[2][1] + z * m[2][2] + m[2][3];
-    float _w = x * m[3][0] + y * m[3][1] + z * m[3][2] + m[3][3];
+    float _x = x * m[0][0] + y * m[0][1] + z * m[0][2] + w * m[0][3];
+    float _y = x * m[1][0] + y * m[1][1] + z * m[1][2] + w * m[1][3];
+    float _z = x * m[2][0] + y * m[2][1] + z * m[2][2] + w * m[2][3];
+    float _w = x * m[3][0] + y * m[3][1] + z * m[3][2] + w * m[3][3];
     x = _x;
     y = _y;
     z = _z;

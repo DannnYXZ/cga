@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.dannnyxz.cga.loader.ModelLoader;
 import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
@@ -33,8 +34,9 @@ public class Application extends ApplicationAdapter {
   @Override
   public void create() {
     windowResolution = new MutablePair<>(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-//    model = ModelLoader.load("models/Ship/Model.obj");
     model = ModelLoader.load("models/Head/Model.obj");
+    model = ModelLoader.load("models/Ship/Model.obj");
+    model = ModelLoader.load("models/Diablo/Model.obj");
     camera = new Camera(new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0);
     cameraDriver = new CameraDriver(camera);
     keyboardProcessor = new KeyboardProcessor();
@@ -51,7 +53,7 @@ public class Application extends ApplicationAdapter {
         Gdx.graphics.getHeight(),
         Pixmap.Format.RGBA8888
     );
-    pixmap.setColor(new Color(1, 1, 1, 1));
+    pixmap.setColor(new Color(1, 1, 0, 1));
     return pixmap;
   }
 
@@ -60,6 +62,7 @@ public class Application extends ApplicationAdapter {
     Gdx.gl.glClearColor(1, 1, 1, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     pixmap.fill();
+    program.clearZBuffer();
     Vec3 resolution = new Vec3(windowResolution.left, windowResolution.right, 0);
 
     Mat4 mProj = Mat4
@@ -81,7 +84,8 @@ public class Application extends ApplicationAdapter {
     program.uniforms().put("proj", mProj);
     program.uniforms().put("screen", mScreen);
     program.uniforms().put("transform", transform);
-    program.uniforms().put("lightSource", new Vec3(1, 1, 1));
+    program.uniforms().put("lightDir", new Vec3(1, 1, 1));
+    program.uniforms().put("time", (float) (TimeUtils.millis() % 1000000));
     program.drawFaces(model.polygons, pixmap);
 //    renderer.renderModel(model, transform, pixmap);
     tex.draw(pixmap, 0, 0);
@@ -90,7 +94,7 @@ public class Application extends ApplicationAdapter {
     spriteBatch.end();
     keyboardProcessor.processInput();
 //    detectResolutionChange(windowResolution);
-    System.out.println(windowResolution.toString());
+    System.out.println(Gdx.graphics.getFramesPerSecond() + "fps");
   }
 
 //  private void detectResolutionChange(Pair<Integer, Integer> prevResolution) {

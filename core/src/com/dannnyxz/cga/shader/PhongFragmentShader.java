@@ -5,12 +5,12 @@ import com.dannnyxz.cga.math.Vec3;
 import com.dannnyxz.cga.math.Vec4;
 import java.util.Map;
 
-public class LambertFragmentShader implements FragmentShader {
+public class PhongFragmentShader implements FragmentShader {
 
   @Override
   public Vec4 execute(Map<String, Object> uniform, Map<String, Object> props) {
     Vec3 lightPos = (Vec3) uniform.get("lightSource");
-    float intensity = ((Vec3) props.get("norm")).dot(lightPos.cp().norm());
+    float intensity = ((Vec3) props.get("vNorm")).dot(lightPos.cp().norm());
     return new Vec4(intensity, intensity, intensity, 1);
   }
 }
