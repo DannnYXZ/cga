@@ -13,8 +13,7 @@ import com.dannnyxz.cga.math.Vec3;
 import com.dannnyxz.cga.math.Vec4;
 import com.dannnyxz.cga.model.Polygon;
 import com.dannnyxz.cga.shader.BasicVertexShader;
-import com.dannnyxz.cga.shader.ExplosiveVertexShader;
-import com.dannnyxz.cga.shader.PhongFullFragmentShader;
+import com.dannnyxz.cga.shader.PhongFragmentShader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,15 +65,21 @@ public class ShaderProgram {
     }
   }
 
+  public ShaderProgram setVertexShader(VertexShader vertexShader) {
+    this.vertexShader = vertexShader;
+    return this;
+  }
+
+  public ShaderProgram setFragmentShader(FragmentShader fragmentShader) {
+    this.fragmentShader = fragmentShader;
+    return this;
+  }
+
   VertexShader vertexShader = new BasicVertexShader();
-//    VertexShader vertexShader = new ExplosiveVertexShader();
-  //  FragmentShader fragmentShader = new WireframeFragmentShader();
-  //  FragmentShader fragmentShader = new LambertFragmentShader();
-//  FragmentShader fragmentShader = new PhongFragmentShader();
-  FragmentShader fragmentShader = new PhongFullFragmentShader();
+  FragmentShader fragmentShader = new PhongFragmentShader();
 
   private void lerp(Vec3 brc, final List<Map<String, Object>> vVariables,
-      Map<String, Object> fVariablesToFill) {
+      Map<String, Object> fVariablesToFill, List<Vec4> v) {
     for (Entry<String, Object> kv : vVariables.get(0).entrySet()) {
       String name = kv.getKey();
       Object value = kv.getValue();
@@ -82,19 +87,35 @@ public class ShaderProgram {
         fVariablesToFill.put(name.replace("flat_", ""), value);
       }
       if (value instanceof Vec3) {
-        fVariablesToFill.put(name, ((Vec3) vVariables.get(0).get(name)).cp().mul(brc.x)
-            .add(((Vec3) vVariables.get(1).get(name)).cp().mul(brc.y))
-            .add(((Vec3) vVariables.get(2).get(name)).cp().mul(brc.z)));
+        Vec4 _v0 = v.get(0);
+        Vec4 _v1 = v.get(1);
+        Vec4 _v2 = v.get(2);
+
+        Vec3 v0 = ((Vec3) vVariables.get(0).get(name)).cp();
+        Vec3 v1 = ((Vec3) vVariables.get(1).get(name)).cp();
+        Vec3 v2 = ((Vec3) vVariables.get(2).get(name)).cp();
+
+        v0.mul(1 / _v0.w);
+        v1.mul(1 / _v1.w);
+        v2.mul(1 / _v2.w);
+        Vec3 interpolated = v0.mul(brc.x)
+            .add(v1.mul(brc.y))
+            .add(v2.mul(brc.z));
+        interpolated.mul(1 / (1 / _v0.w * brc.x + 1 / _v1.w * brc.y + 1 / _v2.w * brc.z));
+        fVariablesToFill.put(name, interpolated);
+//        fVariablesToFill.put(name, ((Vec3) vVariables.get(0).get(name)).cp().mul(brc.x)
+//            .add(((Vec3) vVariables.get(1).get(name)).cp().mul(brc.y))
+//            .add(((Vec3) vVariables.get(2).get(name)).cp().mul(brc.z)));
       }
-      if (value instanceof Vec4) {
-        fVariablesToFill.put(name, ((Vec4) vVariables.get(0).get(name)).cp().mul(brc.x)
-            .add(((Vec4) vVariables.get(1).get(name)).cp().mul(brc.y))
-            .add(((Vec4) vVariables.get(2).get(name)).cp().mul(brc.z)));
-      }
+//      if (value instanceof Vec4) {
+//        fVariablesToFill.put(name, ((Vec4) vVariables.get(0).get(name)).cp().mul(brc.x)
+//            .add(((Vec4) vVariables.get(1).get(name)).cp().mul(brc.y))
+//            .add(((Vec4) vVariables.get(2).get(name)).cp().mul(brc.z)));
+//      }
     }
   }
 
-  public void renderTriangle(Vec3 v1, Vec3 v2, Vec3 v3, List<Map<String, Object>> vertexProps,
+  public void renderTriangle(Vec4 v1, Vec4 v2, Vec4 v3, List<Map<String, Object>> vertexProps,
       Pixmap pixmap) {
     int minX = round(min(v1.x, v2.x, v3.x));
     int maxX = round(max(v1.x, v2.x, v3.x));
@@ -103,20 +124,26 @@ public class ShaderProgram {
     Map<String, Object> fProps = new HashMap<>(); // for speed
     for (int i = minX; i <= maxX; i++) {
       for (int j = minY; j <= maxY; j++) {
-        if (i >= pixmap.getWidth() || i < 0 || j >= pixmap.getHeight() || j < 0) continue;
-        Vec3 brc = toBarycentric(new Vec3(i, j, 0), v1, v2, v3);
-        if (brc.x < 0 || brc.y < 0 || brc.z < 0) continue;
-        Vec3 fPos = v1.cp().mul(brc.x).add(v2.cp().mul(brc.y)).add(v3.cp().mul(brc.z));
+        if (i >= pixmap.getWidth() || i < 0 || j >= pixmap.getHeight() || j < 0) {
+          continue;
+        }
+        Vec3 brc = toBarycentric(new Vec3(i, j, 0), new Vec3(v1), new Vec3(v2), new Vec3(v3));
+        if (brc.x < 0 || brc.y < 0 || brc.z < 0) {
+          continue;
+        }
+        Vec4 fPos = v1.cp().mul(brc.x).add(v2.cp().mul(brc.y)).add(v3.cp().mul(brc.z));
         if (zBuffer != null) {
           synchronized (lock[i][j]) {
-            if (fPos.z < zBuffer[i][j]) {
-              lerp(brc, vertexProps, fProps);
-              fProps.put("brc", brc);
-              Vec4 color = fragmentShader.execute(uniforms, fProps);
-              if (color == null) continue; // discard
-              zBuffer[i][j] = fPos.z;
-              pixmap.drawPixel(i, j, new Color(color.w, color.x, color.y, color.z).toIntBits());
+//            if (fPos.z < zBuffer[i][j]) {
+            lerp(brc, vertexProps, fProps, Arrays.asList(v1, v2, v3));
+            fProps.put("brc", brc);
+            Vec4 color = fragmentShader.execute(uniforms, fProps);
+            if (color == null) {
+              continue; // discard
             }
+            zBuffer[i][j] = fPos.z;
+            pixmap.drawPixel(i, j, new Color(color.w, color.z, color.y, color.x).toIntBits());
+//            }
           }
         }
       }
@@ -128,17 +155,24 @@ public class ShaderProgram {
   }
 
   boolean clip(Vec4 v) {
-    if (!isBetween(v.x, -v.w, v.w)) return true;
-    if (!isBetween(v.y, -v.w, v.w)) return true;
-    if (!isBetween(v.z, -v.w, v.w)) return true;
+    if (!isBetween(v.x, -v.w, v.w)) {
+      return true;
+    }
+    if (!isBetween(v.y, -v.w, v.w)) {
+      return true;
+    }
+    if (!isBetween(v.z, -v.w, v.w)) {
+      return true;
+    }
     return false;
   }
 
   boolean clipZ(Vec4 v) {
-    if (!isBetween(v.z, -v.w, v.w)) return true;
+    if (!isBetween(v.z, -v.w, v.w)) {
+      return true;
+    }
     return false;
   }
-
 
   public void drawFace(Polygon polygon, Pixmap pixmap) {
     List<Vec4> vertices = Arrays.asList(
@@ -156,16 +190,25 @@ public class ShaderProgram {
     for (int i = 0; i < vertices.size(); i++) {
       Map<String, Object> _inOutProps = new HashMap<>();
       _inOutProps.put("norm", polygon.norm);
+      _inOutProps.put("uv", polygon.tex.get(i));
       _inOutProps.put("vNorm", polygon.norms.get(i));
+      _inOutProps.put("model", polygon.norms.get(i));
+      _inOutProps.put("view", polygon.norms.get(i));
       Vec4 _v = vertexShader.execute(vertices.get(i), uniforms, _inOutProps);
       vOutProps.add(_inOutProps);
       _vertices.add(_v);
     }
 
     if (clip(_vertices.get(0))
-        || clip(_vertices.get(1))
-        || clip(_vertices.get(2))) return;
-    _vertices.forEach(v -> v.mul(1 / v.w).mul(screen));
+        && clip(_vertices.get(1))
+        && clip(_vertices.get(2))) {
+      return;
+    }
+    _vertices.forEach(v -> {
+      float z = v.z;
+      v.mul(1 / v.w).mul(screen);
+      v.w = z;
+    });
 
     if (isBackFaceCullingEnabled) {
       Vec4 screenSpaceNorm =
@@ -183,9 +226,9 @@ public class ShaderProgram {
           pixmap);
     }
     if (drawMode == DrawMode.FACES) {
-      renderTriangle(new Vec3(_vertices.get(0)),
-          new Vec3(_vertices.get(1)),
-          new Vec3(_vertices.get(2)), vOutProps, pixmap);
+      renderTriangle(_vertices.get(0),
+          _vertices.get(1),
+          _vertices.get(2), vOutProps, pixmap);
     }
   }
 

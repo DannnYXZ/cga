@@ -14,5 +14,5 @@ public class Polygon {
   public Vec3 norm;
   public List<Vec3> norms = new ArrayList<>();
   public List<Vec3> vertices = new ArrayList<>();
-  public Vec3 tex;
+  public List<Vec3> tex = new ArrayList<>();
 }

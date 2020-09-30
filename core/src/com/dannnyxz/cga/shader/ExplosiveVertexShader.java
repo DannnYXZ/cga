@@ -15,7 +15,7 @@ public class ExplosiveVertexShader implements VertexShader {
   public Vec4 execute(Vec4 vertex, Map<String, Object> uniforms, Map<String, Object> props) {
     Vec4 norm = new Vec4((Vec3) props.get("norm"), 0);
     float time = (Float) uniforms.get("time");
-    vertex.add(norm.cp().mul(3 * max(0, (sin(time * .001f)))));
+    vertex.add(norm.cp().mul(3 * max(0, (sin(time)))));
     Mat4 transform = (Mat4) uniforms.get("transform");
     return vertex.mul(transform);
   }

@@ -50,6 +50,13 @@ public class Vec3 {
     return this;
   }
 
+  public Vec3 mul(Vec3 v) {
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+    return this;
+  }
+
   public Vec3 mul(float k) {
     x *= k;
     y *= k;

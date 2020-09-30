@@ -1,7 +1,6 @@
 package com.dannnyxz.cga.model;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,22 +13,28 @@ public class KeyboardProcessor implements EventPublisher {
   private Map<Class<?>, List<EventListener>> subscribers = new HashMap<>();
 
   private static final List<Integer> processedKeys = Arrays.asList(
-      Input.Keys.Q,
-      Input.Keys.E,
-      Input.Keys.U,
-      Input.Keys.O,
-      Input.Keys.A,
-      Input.Keys.W,
-      Input.Keys.S,
-      Input.Keys.D,
-      Input.Keys.I,
-      Input.Keys.J,
-      Input.Keys.K,
-      Input.Keys.L,
-      Input.Keys.LEFT,
-      Input.Keys.RIGHT,
-      Input.Keys.UP,
-      Input.Keys.DOWN,
+      Keys.Q,
+      Keys.O,
+      Keys.E,
+      Keys.U,
+      Keys.NUM_1,
+      Keys.NUM_2,
+      Keys.NUM_3,
+      Keys.NUM_4,
+      Keys.NUM_5,
+      Keys.NUM_6,
+      Keys.A,
+      Keys.W,
+      Keys.S,
+      Keys.D,
+      Keys.I,
+      Keys.J,
+      Keys.K,
+      Keys.L,
+      Keys.LEFT,
+      Keys.RIGHT,
+      Keys.UP,
+      Keys.DOWN,
       Keys.SHIFT_LEFT,
       Keys.SPACE
   );

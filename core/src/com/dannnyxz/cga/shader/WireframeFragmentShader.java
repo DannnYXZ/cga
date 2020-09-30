@@ -1,5 +1,7 @@
 package com.dannnyxz.cga.shader;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.sin;
 import static org.apache.commons.lang3.math.NumberUtils.min;
 
 import com.dannnyxz.cga.FragmentShader;
@@ -11,14 +13,11 @@ public class WireframeFragmentShader implements FragmentShader {
 
   @Override
   public Vec4 execute(Map<String, Object> uniform, Map<String, Object> props) {
-    float intensity = ((Vec3) props.get("norm")).dot((Vec3) uniform.get("lightSource"));
-//      intensity = .2f;
     Vec3 brc = (Vec3) props.get("brc");
     float d = min(brc.x, brc.y, brc.z);
-    if (d > .05) return null;
-    Vec4 col = (Vec4) props.get("color");
+    float time = (float) uniform.get("time");
+    if (d > .1*abs(sin(time))) return null;
+    Vec4 col = new Vec4(0, 0, 0, 1);
     return col;
-//      return new Vec4(0, 1, 0, 1);
-//      return new Vec4(intensity, intensity, intensity, 1);
   }
 }

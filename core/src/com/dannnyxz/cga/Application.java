@@ -1,5 +1,7 @@
 package com.dannnyxz.cga;
 
+import static com.badlogic.gdx.math.MathUtils.cos;
+import static com.badlogic.gdx.math.MathUtils.sin;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -11,12 +13,13 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.TimeUtils;
-import com.dannnyxz.cga.loader.ModelLoader;
 import com.dannnyxz.cga.math.Mat4;
 import com.dannnyxz.cga.math.Vec3;
 import com.dannnyxz.cga.model.KeyboardEvent;
 import com.dannnyxz.cga.model.KeyboardProcessor;
 import com.dannnyxz.cga.model.Model;
+import com.dannnyxz.cga.model.ModelLoader;
+import com.dannnyxz.cga.model.SupplyShaders;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 public class Application extends ApplicationAdapter {
@@ -30,17 +33,21 @@ public class Application extends ApplicationAdapter {
   Texture tex;
   MutablePair<Integer, Integer> windowResolution;
   ShaderProgram program = new ShaderProgram();
+  SupplyShaders shaderSupplier;
 
   @Override
   public void create() {
     windowResolution = new MutablePair<>(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-    model = ModelLoader.load("models/Head/Model.obj");
-    model = ModelLoader.load("models/Ship/Model.obj");
-    model = ModelLoader.load("models/Diablo/Model.obj");
+    model = ModelLoader.load("models/Ship");
+    model = ModelLoader.load("models/Diablo");
+    model = ModelLoader.load("models/Head");
+    model = ModelLoader.load("models/Quad");
+    shaderSupplier = new SupplyShaders(program);
     camera = new Camera(new Vec3(0, 0, 1), new Vec3(0, 1, 0), 0);
     cameraDriver = new CameraDriver(camera);
     keyboardProcessor = new KeyboardProcessor();
     keyboardProcessor.subscribe(new KeyboardEvent(), cameraDriver);
+    keyboardProcessor.subscribe(new KeyboardEvent(), shaderSupplier);
     spriteBatch = new SpriteBatch();
     pixmap = createScreenPixmap();
     tex = new Texture(pixmap);
@@ -53,7 +60,7 @@ public class Application extends ApplicationAdapter {
         Gdx.graphics.getHeight(),
         Pixmap.Format.RGBA8888
     );
-    pixmap.setColor(new Color(1, 1, 0, 1));
+    pixmap.setColor(new Color(0, 1, 0, 1));
     return pixmap;
   }
 
@@ -65,6 +72,8 @@ public class Application extends ApplicationAdapter {
     program.clearZBuffer();
     Vec3 resolution = new Vec3(windowResolution.left, windowResolution.right, 0);
 
+//      return new Vec4(0, 1, 0, 1);
+//      return new Vec4(intensity, intensity, intensity, 1);
     Mat4 mProj = Mat4
         .projection(0.1f, 10f,
             max(resolution.x, resolution.y) / min(resolution.x, resolution.y),
@@ -78,16 +87,18 @@ public class Application extends ApplicationAdapter {
     transform.mul(mProj);
     transform.mul(mView);
     transform.mul(mModel);
-
+    float time = (float) (TimeUtils.millis() % 1000000) * .001f;
     program.uniforms().put("model", mModel);
     program.uniforms().put("view", mView);
     program.uniforms().put("proj", mProj);
     program.uniforms().put("screen", mScreen);
     program.uniforms().put("transform", transform);
-    program.uniforms().put("lightDir", new Vec3(1, 1, 1));
-    program.uniforms().put("time", (float) (TimeUtils.millis() % 1000000));
+    program.uniforms().put("lightDir", new Vec3(10*sin(time), 0, 10*cos(time)).norm());
+    program.uniforms().put("time", time);
+    program.uniforms().put("normalMap", model.normalMap);
+    program.uniforms().put("diffuseMap", model.diffuseMap);
+    program.uniforms().put("specularMap", model.specularMap);
     program.drawFaces(model.polygons, pixmap);
-//    renderer.renderModel(model, transform, pixmap);
     tex.draw(pixmap, 0, 0);
     spriteBatch.begin();
     spriteBatch.draw(tex, 0, 0);
